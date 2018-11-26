@@ -1,0 +1,287 @@
+/**
+ Gyiks oldal
+ **/
+var Gyik = function () {
+
+    var gyikTable = function () {
+
+        var table = $('#gyik');
+        // begin first table
+
+
+        table.dataTable({
+            // Internationalisation. For more info refer to http://datatables.net/manual/i18n
+            "language": {
+                "aria": {
+                    "sortAscending": ": activate to sort column ascending",
+                    "sortDescending": ": activate to sort column descending"
+                },
+                "emptyTable": "No data available in table",
+                "info": "_START_ - _END_ elem _TOTAL_ elemből",
+                "infoEmpty": "Nincs megjeleníthető adat!",
+                "infoFiltered": "(Szűrve _MAX_ elemből)",
+                "lengthMenu": "Show _MENU_ entries",
+                "search": "Search:",
+                "zeroRecords": "Nincs egyező elem"
+            },
+            // Uncomment below line("dom" parameter) to fix the dropdown overflow issue in the datatable cells. The default datatable layout
+            // setup uses scrollable div(table-scrollable) with overflow:auto to enable vertical scroll(see: assets/global/plugins/datatables/plugins/bootstrap/dataTables.bootstrap.js). 
+            // So when dropdowns used the scrollable div should be removed. 
+            // "dom": "<'row'<'col-md-6 col-sm-12'l><'col-md-6 col-sm-12'f>r>t<'row'<'col-md-5 col-sm-12'i><'col-md-7 col-sm-12'p>>",
+
+            "bStateSave": false, // save datatable state(pagination, sort, etc) in cookie.
+
+            "columns": [{
+                    "orderable": false
+                }, {
+                    "orderable": true
+                }, {
+                    "orderable": true
+                }, {
+                    "orderable": true
+                }, {
+                    "orderable": true
+                }, {
+                    "orderable": true
+                }, {
+                    "orderable": false
+                }],
+            "lengthMenu": [
+                [5, 15, 20, -1],
+                [5, 15, 20, "All"] // change per page values here
+            ],
+            // set the initial value
+            "pageLength": 15,
+            "pagingType": "bootstrap_full_number",
+            "language": {
+                "search": "Keresés: ",
+                "lengthMenu": "  _MENU_ elem/oldal",
+                "paginate": {
+                    "previous": "Előző",
+                    "next": "Következő",
+                    "last": "Utolsó",
+                    "first": "Első"
+                }
+            },
+            "columnDefs": [{// set default column settings
+                    'orderable': false,
+                    'targets': [0]
+                }, {
+                    "searchable": false,
+                    "targets": [0]
+                }],
+            "order": [
+                [4, "desc"]
+            ] // set column as a default sort by asc
+
+
+        });
+
+        var tableWrapper = jQuery('#gyik_wrapper');
+
+        table.find('.group-checkable').change(function () {
+            var set = jQuery(this).attr("data-set");
+            var checked = jQuery(this).is(":checked");
+            jQuery(set).each(function () {
+                if (checked) {
+                    $(this).attr("checked", true);
+                    $(this).parents('tr').addClass("active");
+                } else {
+                    $(this).attr("checked", false);
+                    $(this).parents('tr').removeClass("active");
+                }
+            });
+            jQuery.uniform.update(set);
+        });
+
+        table.on('change', 'tbody tr .checkboxes', function () {
+            $(this).parents('tr').toggleClass("active");
+        });
+
+        tableWrapper.find('.dataTables_length select').addClass("form-control input-sm input-inline"); // modify table per page dropdown
+    }
+
+    var deleteOneGyikConfirm = function () {
+        $('[id*=delete_gyik]').on('click', function (e) {
+            e.preventDefault();
+            var deleteLink = $(this).attr('href');
+            //var gyikName = $(this).closest("tr").find('td:nth-child(3)').text();
+
+            bootbox.setDefaults({
+                locale: "hu",
+            });
+
+            bootbox.confirm("Biztosan törölni akarja a kérdést?", function (result) {
+                if (result) {
+                    window.location.href = deleteLink;
+                }
+            });
+
+        });
+    }
+
+    var deleteGyiksConfirm = function () {
+        $('#del_gyik_form').submit(function (e) {
+            e.preventDefault();
+            currentForm = this;
+            bootbox.setDefaults({
+                locale: "hu",
+            });
+            bootbox.confirm("Biztosan törölni akarja a kijelölt kérdést?", function (result) {
+                if (result) {
+                    // a submit() nem küldi el a gomb name értékét, ezért be kell rakni egy hidden elemet
+                    //$('#del_gyik_form').append($("<input>").attr("type", "hidden").attr("name", "delete_gyik_submit").val("submit"));
+                    currentForm.submit();
+                }
+            });
+        });
+    }
+
+    var enableDisableButtons = function () {
+
+        var deleteGyikSubmit = $('button[name="delete_gyik_submit"]');
+        var checkAll = $('input.group-checkable');
+        var checkboxes = $('input.checkboxes');
+
+        deleteGyikSubmit.attr('disabled', true);
+
+        checkboxes.change(function () {
+            $(this).closest("tr").find('.btn-group a').attr('disabled', $(this).is(':checked'));
+            deleteGyikSubmit.attr('disabled', !checkboxes.is(':checked'));
+        });
+        checkAll.change(function () {
+            checkboxes.closest("tr").find('.btn-group a').attr('disabled', $(this).is(':checked'));
+            deleteGyikSubmit.attr('disabled', !checkboxes.is(':checked'));
+        });
+
+    }
+
+    var resetSearchForm = function () {
+        $('#reset_search_form').on('click', function () {
+            $(':input', '#gyik_search_form')
+                    .not(':button, :submit, :reset, :hidden')
+                    .val('')
+                    .removeAttr('checked')
+                    .removeAttr('selected');
+        });
+    }
+
+    var hideAlert = function () {
+        $('div.alert').delay(2500).slideUp(750);
+    }
+
+
+    var makeActiveConfirm = function () {
+        $('[id*=make_active], [id*=make_inactive]').on('click', function (e) {
+            e.preventDefault();
+
+            var action = $(this).attr('data-action');
+            var gyikId = $(this).attr('rel');
+            var url = $(this).attr('href');
+            var elem = this;
+            //var gyikName = $(this).closest("tr").find('td:nth-child(2)').text();
+
+            bootbox.setDefaults({
+                locale: "hu",
+            });
+            bootbox.confirm("Biztosan módosítani akarja a kérdés státuszát?", function (result) {
+                if (result) {
+                    makeActive(gyikId, action, url, elem);
+                }
+            });
+        });
+    }
+
+    var makeActive = function (gyikId, action, url, elem) {
+        //console.log(elem);
+        $.ajax({
+            type: "POST",
+            data: {
+                id: gyikId,
+                action: action
+            },
+            url: url,
+            dataType: "json",
+            beforeSend: function () {
+                $('#loadingDiv').html('<img src="public/admin_assets/img/loader.gif">');
+                $('#loadingDiv').show();
+            },
+            complete: function () {
+                $('#loadingDiv').hide();
+            },
+            success: function (result) {
+                if (result.status == 'success') {
+
+                    if (action == 'make_inactive') {
+                        $(elem).html('<i class="fa fa-check"></i> Aktivál');
+                        $(elem).attr('data-action', 'make_active');
+                        //$(elem).attr('href', 'admin/gyik/make_active');
+                        $(elem).closest('td').prev().html('<span class="label label-sm label-danger">Inaktív</span>');
+                        $("#ajax_message").html('<div class="alert alert-success">A termék inaktív státuszba került!</div>');
+                        hideAlert();
+                    }
+                    else if (action == 'make_active') {
+                        $(elem).html('<i class="fa fa-ban"></i> Blokkol');
+                        $(elem).attr('data-action', 'make_inactive');
+                        //$(elem).attr('href', 'admin/gyik/make_inactive');
+                        $(elem).closest('td').prev().html('<span class="label label-sm label-success">Aktív</span>');
+                        $("#ajax_message").html('<div class="alert alert-success">A termék aktív státuszba került!</div>');
+                        hideAlert();
+                    }
+
+                } else {
+                    console.log('Hiba: az adatbázis művelet nem történt meg!');
+                    $("#ajax_message").html('<div class="alert alert-success">Adatbázis hiba! A termék státusza nem változott meg!</div>');
+                    hideAlert();
+                }
+            },
+            error: function (result, status, e) {
+                alert(e);
+            }
+        });
+
+    }
+
+
+
+    /*----------------------------------------------------------*/
+
+
+    var add_html = function (label, data) {
+        html = '<dt style="font-size:100%; color:grey;">' + label + '</dt>' +
+                '<dd>' + data + '</dd>' +
+                '<div style="border-top:1px solid #E5E5E5; margin: 8px 0px;"></div>';
+        return html;
+    };
+    var add_html_last = function (label, data) {
+        html = '<dt style="font-size:100%; color:grey;">' + label + '</dt>' +
+                '<dd>' + data + '</dd>';
+        return html;
+    };
+
+    /*----------------------------------------------------------*/
+
+
+    return {
+        //main function to initiate the module
+        init: function () {
+            if (!jQuery().dataTable) {
+                return;
+            }
+
+            gyikTable();
+            deleteOneGyikConfirm();
+            deleteGyiksConfirm();
+            enableDisableButtons();
+            hideAlert();
+            makeActiveConfirm();
+
+        }
+
+    };
+
+}();
+
+$(document).ready(function () {
+    Gyik.init(); // init gyik page
+});
