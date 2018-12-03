@@ -45,6 +45,14 @@ $link['datepicker'] = array(
     )
 );
 
+$link['datetimepicker'] = array(
+    'css' => ADMIN_ASSETS . 'plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.css',
+    'js' => array(
+        ADMIN_ASSETS . 'plugins/bootstrap-datetimepicker/js/bootstrap-datetimepicker.js',
+        ADMIN_ASSETS . 'plugins/bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.hu.js'
+    )
+);
+
 $link['elfinder'] = array(
     'css' => array(
         ADMIN_ASSETS . 'plugins/elfinder/css/elfinder.min.css',
