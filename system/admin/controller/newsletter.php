@@ -8,26 +8,98 @@ class Newsletter extends Controller {
         $this->loadModel('newsletter_model');
     }
 
-    public function index() {
+    /**
+     * Hírlevelek listája oldal
+     */
+    public function index()
+    {
 
         $this->view = new View();
         $this->view->title = 'Hírlevél oldal';
         $this->view->description = 'Hírlevél oldal description';
 
-        $this->view->add_links(array('datatable', 'vframework', 'bootbox', 'select2', 'newsletter_eventsource'));
-
+        $this->view->add_links(array('datatable', 'bootbox', 'select2', 'datetimepicker', 'vframework', 'newsletter_eventsource'));
+        // lekérdezés a newsletters és a stats_newsletters táblákból
         $this->view->newsletters = $this->newsletter_model->newsletter_query();
 
-//$this->view->debug(true);	
         $this->view->set_layout('tpl_layout');
         $this->view->render('newsletter/tpl_newsletter');
     }
 
-    public function new_newsletter() {
+
+    /**
+     * AJAX hírlevél küldésének regisztrálása az adatbázisban
+     */
+    public function sendNewletterRegister()
+    {
+        if (Util::is_ajax()) {
+
+            $newsletter_id = $this->request->get_post('newsletter_id', 'integer');
+            $statid = $this->request->get_post('statid', 'integer');
+            $date = $this->request->get_post('date');
+
+            // Akkor lesz helyes timestamp, ha az óra és perc előtt csak egy space van és nem "-" jel!
+            $timestamp = strtotime($date);
+
+            // Ez megy a stats_newsletter táblába
+            // Az 1-es azt jelenti, hogy a küldés folyamatban van
+            $progress_status = 1;
+
+            //Adatok a stats_newsletter, vagy nesletter táblába
+            $result = $this->newsletter_model->updateProgressStatus($newsletter_id, $statid, $progress_status, $timestamp);
+            
+            if ($result !== false) {
+                echo json_encode(array(
+                    'status' => 'success',
+                    'message' => ''
+                ));
+            } else {
+                echo json_encode(array(
+                    'status' => 'error',
+                    'message' => 'Ismeretlen hiba!'
+                ));                
+            }
+
+            exit;
+        }
+    }
+
+
+
+    /**
+     * Hírlevél létrehozása oldal megjelenítése és feldolgozása is.
+     */
+    public function new_newsletter()
+    {
+        // Létrehozás
         if ($this->request->has_post('submit_new_newsletter')) {
-            $this->newsletter_model->new_newsletter();
+            
+            $data['newsletter_name'] = $_POST['newsletter_name'];
+            $data['newsletter_subject'] = $_POST['newsletter_subject'];
+            $data['newsletter_body'] = $_POST['newsletter_body'];
+            $data['newsletter_template'] = (int)$_POST['newsletter_templates'];
+            //$data['newsletter_status'] = (int)$_POST['newsletter_status'];
+            $data['newsletter_create_date'] = date('Y-m-d-G:i');
+
+            // Új rekord a newsletter táblába
+            $last_insert_id = $this->newsletter_model->insertNewsletter($data);
+
+            if ($last_insert_id) {
+                // Insert rekord a stats_newsletter táblába!
+                $this->newsletter_model->insertStat(array(
+                    'newsletter_id' => $last_insert_id,
+                ));
+
+                Message::set('success', 'Új hírlevél hozzáadva!');
+            } else {
+                Message::set('error', 'Hiba történt!');
+            }
+
+            // Átirányítás
             Util::redirect('newsletter');
         }
+    
+        // Létrehozás oldal megjelenítés    
         $this->view = new View();
         $this->view->title = 'Hírlevél hozzáadása';
         $this->view->description = 'Hírlevél oldal description';
@@ -41,37 +113,65 @@ class Newsletter extends Controller {
         $this->view->render('newsletter/tpl_new_newsletter');
     }
 
-    public function edit_newsletter() {
+    /**
+     * Hírlevél módosítása
+     * @return [type] [description]
+     */
+    public function edit_newsletter()
+    {
+        $id = (int)$this->request->get_params('id');
+        
+        // Hírlevél módosítása feldolgozó
         if ($this->request->has_post('submit_edit_newsletter')) {
-            $this->newsletter_model->edit_newsletter($this->request->get_params('id'));
+            
+
+            $data['newsletter_name'] = $_POST['newsletter_name'];
+            $data['newsletter_subject'] = $_POST['newsletter_subject'];
+            $data['newsletter_body'] = $_POST['newsletter_body'];
+//            $data['newsletter_status'] = (int) $_POST['newsletter_status'];
+            //$data['newsletter_create_date'] = date('Y-m-d-G:i');
+
+            $result = $this->newsletter_model->edit_newsletter($id, $data);
+
+            // ha sikeres az insert visszatérési érték true
+            if ($result !== false) {
+                Message::set('success', 'Hírlevél sablon módosítva!');
+            } else {
+                Message::set('error', 'Hiba történt!');
+            }
+
             Util::redirect('newsletter');
         }
+
+        // Hírlevél módosítása oldal
         $this->view = new View();
         $this->view->title = 'Hírlevél szerkesztése';
         $this->view->description = 'Hírlevél oldal description';
 
         $this->view->add_links(array('ckeditor', 'edit_newsletter'));
 
-        $this->view->newsletter = $this->newsletter_model->newsletter_query($this->request->get_params('id'));
-
+        $this->view->newsletter = $this->newsletter_model->newsletter_query($id);
 
         $this->view->set_layout('tpl_layout');
         $this->view->render('newsletter/tpl_edit_newsletter');
     }
 
-    public function delete_newsletter() {
+    /**
+     * Hírlevél törlése
+     */
+    public function delete_newsletter()
+    {
         if (Util::is_ajax()) {
             $this->newsletter_model->delete_newsletter_AJAX();
         }
-   //     Util::redirect('newsletter');
     }
 
     /**
      * 	Hírlevél törlése AJAX-al
      * 	Az echo $result megy vissza a javascriptnek
      */
-    public function delete_template_AJAX() {
-
+    public function delete_template_AJAX()
+    {
         if (Util::is_ajax()) {
             $result = $this->newsletter_model->delete_template_AJAX();
             echo $result;
@@ -82,34 +182,18 @@ class Newsletter extends Controller {
      * 	Hírlevél csoportos törlése
      * 	
      */
-    public function delete_template() {
+    public function delete_template()
+    {
         $this->newsletter_model->delete_template();
         Util::redirect('newsletter/templates');
     }
 
-    /**
-     * 	Hírlevél id session változóba írása
-     */
-    public function setid() {
-        if (isset($_POST['newsletter_id'])) {
-            Session::set('newsletter_id', (int) $this->request->get_post('newsletter_id'));
-            echo json_encode(array('status' => 'done'));
-        } else {
-            echo json_encode(array('status' => 'fail'));
-        }
-    }
 
-    public function setid_2() {
-        if (isset($_POST['newsletter_id'])) {
-            echo json_encode(array('status' => 'letezik POST newsletter_id: ' . $this->request->get_post('newsletter_id')));
-        } else {
-            echo json_encode(array('status' => 'NEM letezik POST newsletter_id: ' . $this->request->get_post('newsletter_id')));
-        }
-    }
 
     /* --------- EVENTSOURCE -------------------- */
 
-    public function send_newsletter() {
+    public function send_newsletter()
+    {
         header('Content-Type: text/event-stream');
         // recommended to prevent caching of event data.
         header('Cache-Control: no-cache');
@@ -120,29 +204,351 @@ class Newsletter extends Controller {
         set_time_limit(0);
         // ob_implicit_flush(true);
 
-        $this->newsletter_model->send_newsletter();
+        $newsletter_id = (int)$this->request->get_query('newsletter_id');
+        $this->newsletter_model->send_newsletter($newsletter_id);
     }
 
     /* --------- EVENTSOURCE END-------------------- */
 
-    public function newsletter_stats() {
+
+    /* --------- HÍRLEVÉL KÜLDÉS; CRON JOB; FOLYAMAT KÖVETÉS NÉLKÜL; IDŐLIMITTEL -------------------- */
+    public function send_newsletter_timelimit()
+    {
+        // A script futásának az időlimitje (másodpercben)
+        $time_limit = Config::get('newsletter_send_timelimit');
+
+        // Az jelzi, hogy a folyamatot időlimit miatt kellett-e leállítani (true)
+        $time_limit_expired = false;
+
+        // start_time meghatározása (lebegőpontos számot ad vissza)
+        $start_time = microtime(true);
+
+        // Hibás küldések
+        $error = array();
+        
+        // Sikeres küldések
+        $success = array();
+
+        // Jelenlegi timestamp
+        $actual_time = time();
 
 
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        // Küldéshez szükséges adatok lekérdezése, beállítása; Új rekord a stats_newsletter táblába  //
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Az összes hírlevél kampány, amik folyamatban vannak (stats_newsletter táblában 1 es!)
+        $in_progress_campaigns = $this->newsletter_model->findInProgressCampaign();
+
+            // Ha nincsenek függőben lévő kampányok
+            if (empty($in_progress_campaigns)) {
+                exit('nincs fuggoben levo kampany');
+            }
+
+
+        // Annak a hírlevél kampánynak az id-it fogják tartalmazni, amit ténylegesen küldünk
+        $newsletter_id = null;
+        $statid = null;
+
+        // Az első kampány lesz küldve, aminél a küldési timestamp kisebb, mint a jelenlegi timestamp
+        foreach ($in_progress_campaigns as $campaign) {
+            // ha a megadott timestamp kisebb, mint a jelenlegi timestamp
+            if ($campaign['sent_date'] <= $actual_time) {
+                $statid = $campaign['statid'];
+                $newsletter_id = $campaign['newsletter_id'];
+                break;
+            }
+        }
+
+            // Ha a függőben lévő kampányok közül nincs egy sem, amit jelen pillanatban már küldeni kell
+            if (empty($newsletter_id) || empty($statid)) {
+                exit('van fuggoben levo kampany, de meg nem kell kuldeni');
+            } 
+
+
+        // elküldendő hírlevél elemeinek lekérdezése 
+        $newsletter_temp = $this->newsletter_model->newsletter_query((int) $newsletter_id);
+        // az összes e-mail cím, és hozzájuk tartozó user név (akiknek küldeni kell)
+        $email_temp = $this->newsletter_model->user_email_query();
+        // A megadott kampányhoz tartozó, már elküldött email címek lekérdezése az emails_sent táblából
+        $sent_emails = $this->newsletter_model->findSentEmails($statid);
+
+
+        // Email tárgy és törzs változóhoz rendelése
+        foreach ($newsletter_temp as $value) {
+            $subject = $value['newsletter_subject'];
+            $body = $value['newsletter_body'];
+        }
+
+        $body_temp = $body;
+
+        // User adatok külön tömbökbe helyezése
+        // A MÁR ELKÜLDÖTT EMAIL CÍMEKET KIHAGYJA!
+        foreach ($email_temp as $value) {
+            // Ha az email cím már szerepel az elküldöttek listáján akkor ugorja át
+            if (in_array($value['user_email'], $sent_emails)) {
+               continue;
+            }
+
+            $user_emails[] = $value['user_email'];
+            $user_names[] = $value['user_name'];
+            $user_ids[] = $value['user_id'];
+            $user_unsubs[] = $value['user_unsubscribe_code'];
+        }
+
+        // A jelenleg küldendő email címek száma
+        $all_email_address = count($user_emails);
+
+
+
+// TESZT
+if (true) {
+        
+        echo 'newsletter_id: ' . $newsletter_id . '<br>';
+        echo 'statid: ' . $statid . '<br>';
+        echo 'Osszes email cim a site_users tablaban ami aktiv: ' . count($email_temp) . '<br>';
+
+
+        $progress_counter = 0;
+
+            // Email-ek elküldése
+            foreach ($user_emails as $mail_address) {
+
+                $number = rand(1000,11000);
+                // Várakozás
+                time_nanosleep(0, 10000000);
+
+                if($number > 2000){
+                    $success[] = $mail_address;
+                    $this->newsletter_model->insert_email_log($mail_address, 0, '', $statid);
+                    
+                } else{
+                    $error[] = $mail_address;
+                    $this->newsletter_model->insert_email_log($mail_address, 1, 'hiba', $statid);
+                }
+
+                $progress_counter++;
+
+
+                ////////////////////////////////////////////
+                // Az aktuális email küldése befejeződött //
+                ////////////////////////////////////////////
+
+                // időpont meghatározása (lebegőpontos számot ad vissza)
+                $end_time = microtime(true);
+
+                // Megvizsgáljuk, hogy lejárt-e az időlimit
+                if (($end_time - $start_time) >= $time_limit) {
+
+                    // Megnézzük, hogy nem ez volt-e az utolsó küldendő email (mert akkor nem járt le az idő és minden email elment)
+                    if ($all_email_address == $progress_counter) {
+                        // Az időlimit lejárt, de nem volt már több elküldendő email
+                        $time_limit_expired = false;
+                    } else {
+                        // Az időlimit lejárt, és volt még elküldendő email
+                        $time_limit_expired = true;
+                    }
+
+                    // Kilépés a cikusból;
+                    break;
+                }
+                
+            }
+
+        echo 'Eddig osszesen elkuldott email-ek szama: ' . (count($sent_emails) + $progress_counter) . '<br>';
+        echo 'A fennmarado email cimek szama: ' . ($all_email_address - $progress_counter) . '<br>';
+        echo 'Ebben a menetben elkuldott emailek szama: ' . $progress_counter . '<br><br><hr>';    
+
+
+
+} else {
+
+
+
+            /////////////////////////
+            // Küldés PHPMailer-el //
+            /////////////////////////
+
+            include(LIBS . '/PHPMailer/PHPMailerAutoload.php');
+
+            $mail = new PHPMailer();
+
+            if (Config::get('email.server.use_smtp')) {
+
+                //SMTP beállítások!!
+                $mail->isSMTP(); // Set mailer to use SMTP              
+                $mail->SMTPDebug = Config::get('email.server.phpmailer_debug_mode'); // Enable verbose debug output
+                $mail->Debugoutput = 'html';
+                $mail->SMTPAuth = Config::get('email.server.smtp_auth'); // Enable SMTP authentication
+                $mail->SMTPKeepAlive = false; // SMTP connection will not close after each email sent, reduces SMTP overhead
+                // Specify SMTP host server
+                $mail->Host = Config::get('email.server.smtp_host');
+                $mail->Username = Config::get('email.server.smtp_username'); // SMTP username
+                $mail->Password = Config::get('email.server.smtp_password'); // SMTP password
+                $mail->Port = Config::get('email.server.smtp_port'); // TCP port to connect to
+                //     $mail->SMTPSecure = Config::get('email.server.smtp_encryption'); // Enable TLS encryption, `ssl` also accepted
+            } else {
+                $mail->IsMail();
+            }
+
+            $mail->CharSet = 'UTF-8'; //karakterkódolás beállítása
+            $mail->WordWrap = 78; //sortörés beállítása (a default 0 - vagyis nincs)
+            $mail->AddReplyTo(Config::get('email.from_email'), Config::get('email.from_name'));
+            $mail->From = Config::get('email.from_email'); //feladó e-mail címe
+            $mail->FromName = Config::get('email.from_name'); //feladó neve
+            $mail->Subject = $subject; // Tárgy megadása
+            $mail->isHTML(true); // Set email format to HTML                                  
+            
+            //a ciklusok számát fogja számolni (vagyis hogy éppen mennyi emailt küldött el) 
+            $progress_counter = 0;
+
+            // Email-ek elküldése
+            foreach ($user_emails as $key => $mail_address) {
+
+                $body = $body_temp;
+                //Since the tracking URL is a bit long, I usually put it in a variable of it's own
+                $tracker_url = BASE_URL . 'track_open/' . $user_ids[$key] . '/' . $statid;
+
+                //Add the tracker to the message.
+                $tracker = '<img alt="" src="' . $tracker_url . '" width="1" height="1" border="0" />';
+                $unsubscribe_url = BASE_URL . 'leiratkozas/' . $user_ids[$key] . '/' . $user_unsubs[$key] . '/' . $statid;
+                $unsubscribe = '<p>Leiratkozáshoz kattintson a következő linkre: <a href="' . $unsubscribe_url . '">Leiratkozás</a></p>';
+
+                $body = $this->newsletter_model->replace_links($body, $user_ids[$key], $statid);
+
+                $body = str_replace('{$name}', $user_names[$key], $body);
+                $body = str_replace('{$unsubscribe}', $unsubscribe, $body);
+                $body = str_replace('</body>', $tracker . '</body>', $body);
+                $body = str_replace('{$subject}', $subject, $body);
+                $body = str_replace('{$email}', $mail_address, $body);
+                $body = str_replace('{$date}', date("Y-m-d"), $body);
+
+
+                $mail->Body = '<html><body>' . $body . '</body></html>';
+
+                $mail->addAddress($mail_address, $user_names[$key]);     // Add a recipient (Name is optional)
+                //$mail->addCC('cc@example.com');
+                //$mail->addBCC('bcc@example.com');
+                //$mail->addStringAttachment('image_eleresi_ut_az_adatbazisban', 'YourPhoto.jpg'); //Assumes the image data is stored in the DB
+                //$mail->addAttachment('/var/tmp/file.tar.gz');         // Add attachments
+                //$mail->addAttachment('/tmp/image.jpg', 'new.jpg');    // Optional name
+                //$mail->AltBody = 'This is the body in plain text for non-HTML mail clients';  
+                
+                // final sending and check
+                if ($mail->send()) {
+                    $success[] = $mail_address;
+                    $this->newsletter_model->insert_email_log($mail_address, 0, '', $statid);
+                
+                } else {
+                    $error[] = $mail_address;
+                    $this->newsletter_model->insert_email_log($mail_address, 1, $mail->ErrorInfo, $statid);
+                    Message::log($mail->ErrorInfo);
+                
+                }
+
+                $mail->clearAddresses();
+                $mail->clearAttachments();
+
+                $progress_counter++;
+
+
+            ////////////////////////////////////////////
+            // Az aktuális email küldése befejeződött //
+            ////////////////////////////////////////////
+
+            // időpont meghatározása (lebegőpontos számot ad vissza)
+            $end_time = microtime(true);
+
+            // Megvizsgáljuk, hogy lejárt-e az időlimit
+            if (($end_time - $start_time) >= $time_limit) {
+
+                // Megnézzük, hogy nem ez volt-e az utolsó küldendő email (mert akkor nem járt le az idő és minden email elment)
+                if ($all_email_address == $progress_counter) {
+                    // Az időlimit lejárt, de nem volt már több elküldendő email
+                    $time_limit_expired = false;
+                } else {
+                    // Az időlimit lejárt, és volt még elküldendő email
+                    $time_limit_expired = true;
+                }
+
+                // Kilépés a cikusból;
+                break;
+            }
+
+        } // END foreach 
+
+
+
+} // TESZT ELSE
+
+
+        ////////////////////////////////////////////////////////
+        // Adatbázisba írjuk a küldéssel kapcsolatos adatokat //
+        ////////////////////////////////////////////////////////
+        
+        // Adatok beírása a stats_newsletters táblába
+        $recepients = count($success) + count($error);
+        $send_success = count($success);
+        $send_fail = count($error);
+        // Azok az oszlopok, amiknél értéket kell növelni
+        $quantity_increase = array(
+            'recepients' => 'recepients+' .  $recepients,
+            'send_success' => 'send_success+' .  $send_success,
+            'send_fail' => 'send_fail+' .  $send_fail
+        );
+
+        // Ha időlimit miatt áll le a script futása 
+        if ($time_limit_expired) {
+            $data['progress_status'] = 1; // 1 - folyamatban; 2 - kész
+            $data['error'] = 1;
+        } else {
+            // Ha minden email elküldve időlimiten belül 
+            $data['progress_status'] = 2; // 1 - folyamatban; 2 - kész
+            $data['error'] = 0;
+        }
+
+        // Adatok frissítése (UPDATE) a stats_newsletter táblában
+        $this->newsletter_model->updateStat($statid, $data, $quantity_increase);
+
+        // Script futásának a befejezése
+        if ($time_limit_expired) {
+            exit('Email kuldes idolimit miatt befejezve.');
+        } else {
+            exit('Minden email elküldve!');
+        }
+                
+    }
+    /* --------- SIMA KÜLDÉS, FOLYAMAT KÖVETÉSE NÉLKÜL END-------------------- */
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Hírlevél kampányok statisztika lista oldal
+     */
+    public function newsletter_stats()
+    {
         $this->view = new View();
         $this->view->title = 'Elküldött hírlevelek oldal';
         $this->view->description = 'Elküldött hírlevél oldal description';
 
         $this->view->add_links(array('datatable', 'bootbox', 'select2', 'newsletter_stats'));
 
-
         $this->view->newsletters = $this->newsletter_model->newsletter_stats_query();
 
-
-        //$this->view->debug(true);	
         $this->view->set_layout('tpl_layout');
         $this->view->render('newsletter/tpl_newsletter_stats');
     }
 
+    /**
+     * Egy kampány statisztikája oldal
+     */
     public function newsletter_stat() {
 
         $newsletter_id = (int) $this->request->get_params('id');
@@ -362,5 +768,4 @@ class Newsletter extends Controller {
     }
 
 }
-
 ?>
