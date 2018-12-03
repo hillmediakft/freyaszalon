@@ -1,13 +1,11 @@
-/**
- Users oldal
- **/
 var Newsletter = function () {
 
+    /**
+     * Táblázat beállítások
+     */
     var newsletterTable = function () {
 
         var table = $('#newsletter_table');
-        // begin first table
-
 
         table.dataTable({
             // Internationalisation. For more info refer to http://datatables.net/manual/i18n
@@ -101,6 +99,9 @@ var Newsletter = function () {
         tableWrapper.find('.dataTables_length select').addClass("form-control input-sm input-inline"); // modify table per page dropdown
     }
 
+    /**
+     * Egy elem törlése kérdés
+     */
     var deleteOneNewsletterConfirm = function () {
         $('[id*=delete_newsletter]').on('click', function (e) {
             e.preventDefault();
@@ -125,6 +126,9 @@ var Newsletter = function () {
 
     }
 
+    /**
+     * Csoportos törlés kérdés
+     */
     var deleteNewsletterTableConfirm = function () {
         $('#del_newsletter_form').submit(function (e) {
             e.preventDefault();
@@ -143,7 +147,9 @@ var Newsletter = function () {
     }
 
 
-
+    /**
+     * Hírlevél küldés kérdés
+     */
     var submitNewsletterConfirm = function () {
         $('[id*=submit_newsletter]').on('click', function (e) {
             e.preventDefault();
@@ -154,34 +160,147 @@ var Newsletter = function () {
             var link = $(this);
             var newsletter_id = link.attr('rel');
 
-
-            bootbox.setDefaults({
-                locale: "hu",
-            });
+            bootbox.setDefaults({locale: "hu"});
             bootbox.confirm("Biztosan el akarja küldeni a <strong>" + newsletterName + "</strong> hírlevelet?", function (result) {
                 if (result) {
-                    //window.location.href = deleteLink;
+                    // Küldés időlimittel
+                    submit_newsletter_AJAX(newsletter_id);						
 
-                    // paraméter az <a> elem amire klikkeltünk
-                    //submit_newsletter_AJAX(newsletter_id);						
-
-
-                    submit_newsletter_id(newsletter_id);
-                    //startTask();
-
-//					window.open("http://dev.freyaszalon.hu/admin/newsletter_progress", newsletter_id, "width=700, height=500, top=120, left=400, toolbar=no, scrollbars=no");
-
-
-
+                    // hírlevél küldés folyamat modal megjelenítése
+                    //$('#newsletter_box').modal('show');
+                    //startTask(newsletter_id);
                 }
             });
+        });
+    }
+    
+    /**
+     * DatetimePicker beállítása
+     */
+    var handleDatetimePicker = function () {
+
+        if (!jQuery().datetimepicker) {
+            return;
+        }
+
+        $(".form_datetime").datetimepicker({
+            autoclose: true,
+            todayBtn: true,
+            todayHighlight: true,
+            language: "hu",
+            startDate: new Date(),
+            isRTL: App.isRTL(),
+            format: "yyyy-mm-dd hh:ii",
+            pickerPosition: (App.isRTL() ? "bottom-right" : "bottom-left")
+        });
+
+        $('body').removeClass("modal-open"); // fix bug when inline picker is used in modal
+    }
+    
+
+    /**
+     * Hírlevél küldés modal - naptárral
+     */
+    var submitNewsletterConfirmModal = function () {
+
+        var newsletter_id;
+        var statid;
+
+        // Ha ráklikkel a hírlevél küldése gombra a megjelenő menüben
+        $('[id*=submit_newsletter]').on('click', function (e) {
+            e.preventDefault();
+
+            //var newsletterName = $(this).closest("tr").find('td:nth-child(2)').text();
+            // az <a> html elemet hozzárendeljük a link nevű változóhoz
+            var link = $(this);
+
+            // Ha a link már disabled
+            if(link.hasClass('disabled-link')) {
+                return false;
+            }
+
+            newsletter_id = link.attr('rel');
+            statid = link.attr('data-statid');
+
+            // Modal megjelenítése
+            $('#datepicker_modal').modal('show');
+
+        });
+
+        // Idő adat elküldése és modal bezárása
+        $('#datetime_send_button').on('click', function (e) {
+
+            var date = $('#datetime_data').val()
+
+            // Ha nem üres az input mező
+            if (date != "") {
+
+                // Adatok beírása az adatbázisba
+                $.ajax({
+                    url: 'admin/newsletter/sendNewletterRegister',
+                    type: 'POST',
+                    dataType: 'json',
+                    //contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                    data: {
+                        newsletter_id: newsletter_id,
+                        statid: statid,                                
+                        date: date
+                    },
+                
+                    beforeSend: function() {
+                        // Küldő gomb disabled
+                        $('#datetime_send_button').attr('disabled', true);
+                        App.blockUI({
+                            boxed: true,
+                            message: 'Feldolgozás...'
+                        });
+                    },
+                    complete: function(){
+                        App.unblockUI();
+                    },
+                    // itt kapjuk meg (és dolgozzuk fel) a feldolgozó php által visszadott adatot 
+                    success: function(result){
+                        
+                        if(result.status == 'success'){
+
+                            // A link osztályát disabled-re állítjuk
+                            $('#submit_newsletter_' + newsletter_id).addClass('disabled-link');
+                            
+                            // Modal bezárása
+                            $('#datepicker_modal').modal('hide');
+
+                            // Amikor teljesen bezáródik a modal
+                            $('#datepicker_modal').on('hidden.bs.modal', function (e) {
+                                // Küldő gomb enabled
+                                //$('#datetime_send_button').attr('disabled', false);
+                                
+                                // Frissítjük az oldalt egy redirect-el
+                                window.location.href = "admin/newsletter";
+                            });
+
+
+                        }
+
+                        if(result.status == 'error'){
+                    
+                        }
+                    },
+                    error: function(result, status, e){
+                        console.log(e);
+                    } 
+                });
+
+            } else {
+                console.log('ures');
+            }
+
         });
 
     }
 
-
-
-
+    /**
+     * Gomb enable disable
+     */
     var enableDisableButtons = function () {
 
         var deleteUserSubmit = $('button[name="del_newsletter_submit"]');
@@ -291,28 +410,20 @@ var Newsletter = function () {
                 alert(e);
             }
         });
-
-        //});
-
-
     }
+
     /*--------------------------------------------------*/
 
-
-
-
     /**
-     *	Hírlevél küldés AJAX (jQuery)
+     *	Hírlevél küldés AJAX - IDŐLIMITES KÜLDÉS!
      *
      */
     var submit_newsletter_AJAX = function (newsletter_id) {
 
         //var lastsent = $(this).closest("tr").find('td:nth-child(5)').text();
         //var lastsent = link.closest("tr").find('td:nth-child(5)');
-
         //var data = "newsletter_id="+newsletter_id;
 
-
         //végrehajtjuk az AJAX hívást
         $.ajax({
             type: "POST",
@@ -321,107 +432,45 @@ var Newsletter = function () {
                 newsletter_id: newsletter_id
             },
             // a feldolgozó url-je
-            //url: "admin/newsletter/eventsource",
-            url: "admin/newsletter/setid_2",
-            // kész a hívás... utána ez történjen
+            url: "admin/newsletter/send_newsletter_timelimit",
             dataType: "json",
             beforeSend: function () {
-                console.log('before send');
-                //megjelenítjük a loading animációt
-                //$('#loadingDiv').html('<img src="public/admin_assets/img/loader.gif">');
-                //$('#loadingDiv').show();
+                App.blockUI({
+                    boxed: true,
+                    message: 'Email küldés folyamatban...',
+                    overlayColor: '#000000'
+                });
             },
+            // kész a hívás... utána ez történjen
             complete: function () {
-                console.log('complete');
-                $('#loadingDiv').hide();
+                App.unblockUI();
             },
             // itt kapjuk meg (és dolgozzuk fel) a feldolgozó php által visszadott adatot 
             success: function (result) {
-                console.log('success');
-                console.log(result.status);
-                startTask();
-                //JSON string elemeinek elhelyezése egy objektumba
-            },
-            done: function () {
-                console.log('ez a done');
-            },
-            error: function (result, status, e) {
-                console.log('error!!!');
-
-                //alert(e);
-            }
-        });
-
-        //});
-
-
-    } // Hírlevél küldés AJAX (jQuery)
-
-
-
-    /**
-     *	Hírlevél küldés AJAX (jQuery)
-     *
-     */
-    var submit_newsletter_id = function (newsletter_id) {
-        $('#newsletter_box').modal('show');
-        //végrehajtjuk az AJAX hívást
-        $.ajax({
-            type: "POST",
-            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-            data: {
-                newsletter_id: newsletter_id
-            },
-            dataType: "json",
-            // a feldolgozó url-je
-            url: "admin/newsletter/setid",
-            //url: "admin/newsletter/eventsource",
-            // kész a hívás... utána ez történjen
-            beforeSend: function () {
-                console.log('before send');
-                //startTask();
-            },
-            complete: function () {
-                console.log('complete');
-            },
-            // itt kapjuk meg (és dolgozzuk fel) a feldolgozó php által visszadott adatot 
-            success: function (result) {
-                //console.log('success');
                 console.log(result.status);
 
             },
             error: function (result, status, e) {
-                console.log('error!!!');
-
-                //alert(e);
+                console.log(e);
             }
         });
 
-        //});
-
-
-    } // Hírlevél küldés AJAX (jQuery)	
+    }
 
 
 
-
-
-
-
-
-
-
-    /*--------------------------------------------------*/
+    /*---------------EVENTSOURCE-----------------*/
 
     var es;
 
-    var startTask = function () {
+    var startTask = function (newsletter_id) {
 
 
         var progress_bar = document.getElementById('progress_bar');
         var progress_pc = document.getElementById('progress_pc');
         var message_done = document.getElementById('message_done');
         var message_box = document.getElementById('message');
+        // bootstrap modal
         var bootstrap_progress_bar = $("#bootstrap_progress_bar");
         var bootstrap_progress_bar_value = $("#bootstrap_progress_bar").attr("aria-valuenow");
         var bootstrap_progress_bar_max = $("#bootstrap_progress_bar").attr("aria-valuemax");
@@ -432,35 +481,32 @@ var Newsletter = function () {
         progress_pc.innerHTML = "0%";
         message_box.innerHTML = 'E-mail küldés folyamatban...<br>';
 
-
         message_box.style.display = 'block';
-//        progress_bar.style.display = 'block';
+        // progress_bar.style.display = 'block';
 
-        //var query_string = '?newsletter_id='+newsletter_id;
+        // EventSource objektum létrehozása
+        es = new EventSource('admin/newsletter/send_newsletter?newsletter_id=' + newsletter_id);
 
-        es = new EventSource('admin/newsletter/send_newsletter');
-
-        console.log(es);
-
-
-        //a message is received
+        // Ha egy üzenet érkezik
         es.addEventListener('message', function (e) {
-            var result = JSON.parse(e.data);
 
+            var result = JSON.parse(e.data);
             addLog(result.message);
 
             if (e.lastEventId == 'CLOSE') {
                 addLog('<p><strong>Hírlevelek küldése kész</strong></p>');
                 es.close();
-//                progress_bar.value = progress_bar.max; //max out the progress bar
+                // progress_bar.value = progress_bar.max; //max out the progress bar
+                
+                // bootstrap modal verzió
                 bootstrap_progress_bar.attr("aria-valuenow", bootstrap_progress_bar_max); //max out the progress bar
 
             } else {
-//                progress_bar.value = result.progress;
+                // progress_bar.value = result.progress;
                 bootstrap_progress_bar.attr("aria-valuenow", result.progress);
                 bootstrap_progress_bar.width(result.progress + '%');
                 progress_pc.innerHTML = result.progress + "%";
-                //               progress_pc.style.width = (Math.floor(progress_bar.clientWidth * (result.progress / 100)) + 15) + 'px';
+                // progress_pc.style.width = (Math.floor(progress_bar.clientWidth * (result.progress / 100)) + 15) + 'px';
             }
         });
 
@@ -473,7 +519,7 @@ var Newsletter = function () {
 
     var stopTask = function () {
         es.close();
-        addLog('Interrupted');
+        addLog('Folyamat megszakítva!');
     }
 
     var addLog = function (message) {
@@ -483,7 +529,7 @@ var Newsletter = function () {
     }
 
 
-    /*--------------------------------------------------*/
+    /*-----------------END EVENTSOURCE-----------------*/
 
 
     var sendTestEmail = function () {
@@ -521,12 +567,11 @@ var Newsletter = function () {
 
                     },
                     error: function (result, status, e) {
-                        alert(e);
+                        console.log(e);
                     }
                 });
 
             });
-
 
 
         });
@@ -547,14 +592,16 @@ var Newsletter = function () {
             newsletterTable();
             deleteOneNewsletterConfirm();
             deleteNewsletterTableConfirm();
-            submitNewsletterConfirm();
+            
+            // submitNewsletterConfirm();
+            submitNewsletterConfirmModal();
+
             enableDisableButtons();
             hideAlert();
             printTable();
             sendTestEmail();
-            //submit_newsletter_AJAX_2;
-            //startTask();
 
+            handleDatetimePicker();
         }
 
     };
