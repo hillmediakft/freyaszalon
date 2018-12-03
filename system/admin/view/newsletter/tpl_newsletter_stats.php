@@ -87,7 +87,7 @@
                                             <td><?php echo ($value['email_opens'] != 0) ? $value['email_opens'] : '0';?> / <?php echo ($value['unique_email_opens'] != 0) ? $value['unique_email_opens'] : '0';?></td>
                                             <td><?php echo ($value['email_clicks'] != 0) ? $value['email_clicks'] : '0';?> / <?php echo ($value['unique_email_clicks'] != 0) ? $value['unique_email_clicks'] : '0'; ?></td>
                                             <td><?php echo ($value['unsubscribe_count'] != 0) ? $value['unsubscribe_count'] : '0'; ?></td>
-                                            <td><?php echo (!$value['error']) ? '<span class="label label-sm label-success">Elküldve</span>' : '<span class="label label-sm label-warning">Részleges</span>'; ?></td>
+                                            <td><?php echo ($value['progress_status'] == 2) ? '<span class="label label-sm label-success">Elküldve</span>' : '<span class="label label-sm label-warning">Részleges</span>'; ?></td>
 
                                             <td>
                                                 <div class="actions">

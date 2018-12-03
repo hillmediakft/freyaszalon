@@ -61,15 +61,15 @@
                             <table class="table table-striped table-bordered table-hover" id="newsletter_table">
                                 <thead>
                                     <tr class="heading">
-                                        <th class="table-checkbox">
+                                        <th class="table-checkbox" style="width:0px;">
                                             <input type="checkbox" class="group-checkable" data-set="#newsletter_table .checkboxes"/>
                                         </th>
                                         <th>Név</th>
                                         <th>Tárgy</th>
                                         <th title="Létrehozás dátuma">Létrehozva</th>
-                                        <th title="Utolsó küldés dátuma">Utolsó küldés</th>
+                                        <th title="Utolsó küldés dátuma">Küldés dátuma</th>
                                         <th>Státusz</th>
-                                        <th></th>
+                                        <th style="width:0px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -78,16 +78,26 @@
 
                                         <tr class="odd gradeX">
                                             <td>
-                                                <?php if (Session::get('user_role_id') > 0 && empty($value['newsletter_lastsent_date'])) { ?>
+                                                <?php if (Session::get('user_role_id') > 0 && empty($value['sent_date'])) { ?>
                                                     <input type="checkbox" class="checkboxes" name="newsletter_id_<?php echo $value['newsletter_id']; ?>" value="<?php echo $value['newsletter_id']; ?>"/>
                                                 <?php } ?>	
                                             </td>
                                             <td><?php echo $value['newsletter_name']; ?></td>
                                             <td><?php echo $value['newsletter_subject']; ?></td>
                                             <td><?php echo $value['newsletter_create_date']; ?></td>
-                                            <td><?php echo (empty($value['newsletter_lastsent_date'])) ? '<span class="label label-sm label-info">Nincs dátum</span>' : $value['newsletter_lastsent_date']; ?></td>
+                                            <td><?php echo (empty($value['sent_date'])) ? '<span class="label label-sm label-info">Nincs dátum</span>' : date('Y-m-d H:i', $value['sent_date']); ?></td>
 
-                                            <td><?php echo ($value['newsletter_status'] == 1) ? '<span class="label label-sm label-success">Aktív</span>' : '<span class="label label-sm label-danger">Inaktív</span>'; ?></td>
+                                            <td>
+                                                <?php 
+                                                    if ($value['progress_status'] == 0) {
+                                                        echo '<span class="label label-sm label-default">Nincs elküldve</span>';
+                                                    } elseif ($value['progress_status'] == 1) {
+                                                        echo '<span class="label label-sm label-danger">Folyamatban</span>';
+                                                    } elseif ($value['progress_status'] == 2) {
+                                                        echo '<span class="label label-sm label-success">Elküldve</span>';
+                                                    }
+                                                ?>
+                                            </td>
 
                                             <td>
                                                 <div class="actions">
@@ -98,27 +108,25 @@
                                                         </a>
                                                         <ul class="dropdown-menu pull-right">
 
-                                                            <?php if ($value['newsletter_status'] == 1) { ?>
+
+                                                            <?php if ($value['progress_status'] == 1 || $value['progress_status'] == 2) { ?>
+                                                                <li>
+                                                                    <a href="admin/newsletter/newsletter_stat/<?php echo $value['statid']; ?>"><i class="fa fa-bar-chart-o"></i> Statisztika</a>
+                                                                </li>
+                                                            <?php } else { ?> 
+
                                                                 <li>
                                                                     <a id="send_test_email_<?php echo $value['newsletter_id']; ?>" data-id="<?php echo $value['newsletter_id']; ?>" data-subject="<?php echo $value['newsletter_subject']; ?>"><i class="fa fa-arrow-circle-o-right"></i> Teszt e-mail elküldése</a>
                                                                 </li>
-                                                            <?php } ?>                                                            
-
-
-                                                            <?php if ($value['newsletter_status'] == 1) { ?>
                                                                 <li>
-                                                                    <a id="submit_newsletter_<?php echo $value['newsletter_id']; ?>" rel="<?php echo $value['newsletter_id']; ?>"><i class="fa fa-trash"></i> Hírlevél elküldése</a>
+                                                                    <a id="submit_newsletter_<?php echo $value['newsletter_id']; ?>" rel="<?php echo $value['newsletter_id']; ?>" data-statid="<?php echo $value['statid']; ?>"><i class="fa fa-envelope"></i> Hírlevél elküldése</a>
                                                                 </li>
-                                                            <?php } ?>
-                                                            <li>
-                                                                <a href="admin/newsletter/edit_newsletter/<?php echo $value['newsletter_id']; ?>"><i class="fa fa-pencil"></i> Szerkeszt</a>
-                                                            </li>
-
-                                                            <!--
-                                                            <li><a href="<?php //echo $this->registry->site_url . 'newsletter/delete_newsletter/' . $value['newsletter_id'];      ?>" id="delete_newsletter_<?php //echo $value['newsletter_id'];      ?>" rel="<?php //echo $value['newsletter_id'];      ?>"> <i class="fa fa-trash"></i> Töröl</a></li>
-                                                            -->
-
-                                                            <?php if (empty($value['newsletter_lastsent_date'])) { ?>
+                                                                <li>
+                                                                    <a href="admin/newsletter/edit_newsletter/<?php echo $value['newsletter_id']; ?>"><i class="fa fa-pencil"></i> Szerkeszt</a>
+                                                                </li>
+                                                                <!--
+                                                                <li><a href="<?php //echo $this->registry->site_url . 'newsletter/delete_newsletter/' . $value['newsletter_id'];      ?>" id="delete_newsletter_<?php //echo $value['newsletter_id'];      ?>" rel="<?php //echo $value['newsletter_id'];      ?>"> <i class="fa fa-trash"></i> Töröl</a></li>
+                                                                -->
                                                                 <li>
                                                                     <a id="delete_newsletter_<?php echo $value['newsletter_id']; ?>" rel="<?php echo $value['newsletter_id']; ?>"><i class="fa fa-trash"></i> Töröl</a>
                                                                 </li>
@@ -156,10 +164,49 @@
 <!-- END PAGE CONTENT WRAPPER -->
 
 
-
-
-
 </div><!-- END CONTAINER -->
+
+
+<!-- KÜLDÉS ÉS DATEPICKER MODAL -->
+<div id="datepicker_modal" class="modal fade" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Válassza ki a hírlevél küldésének időpontját</h4>
+            </div>
+            <div class="modal-body">
+
+                <form action="#" class="form-horizontal" id="datetime_form">
+                   
+                    <div class="form-group">
+                        <label class="control-label col-md-4">Időpont megadása</label>
+                        <div class="col-md-8">
+                            <div class="input-group date form_datetime input-large">
+                                <input type="text" size="16" readonly class="form-control" id="datetime_data">
+                                <span class="input-group-btn">
+                                    <button class="btn default date-set" type="button">
+                                        <i class="fa fa-calendar"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!-- /input-group -->
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn grey-salsa btn-outline" data-dismiss="modal" aria-hidden="true">Bezárás</button>
+                <button class="btn green btn-primary" id="datetime_send_button">Rendben</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <div id="loadingDiv"></div>
 
 <?php include 'system/admin/view/newsletter/modal_send_newsletter.php'; ?>

@@ -1,4 +1,4 @@
-<!-- BEGIN CONTENT -->
+BEGIN CONTENT -->
 <div class="page-content-wrapper">
     <div class="page-content">
         <!-- BEGIN PAGE HEADER-->
@@ -50,11 +50,11 @@
 
                                             <div class="form-group">
                                                 <label for="newsletter_name" class="control-label">Név</label>
-                                                <input type="text" name="newsletter_name" id="newsletter_name" value="<?php echo $this->newsletter[0]['newsletter_name']; ?>" placeholder="" class="form-control input-xlarge" />
+                                                <input type="text" name="newsletter_name" id="newsletter_name" value="<?php echo $this->newsletter[0]['newsletter_name']; ?>" placeholder="" class="form-control input-xlarge" required/>
                                             </div>
                                             <div class="form-group">
                                                 <label for="newsletter_subject" class="control-label">Tárgy</label>
-                                                <input type="text" name="newsletter_subject" id="newsletter_subject" value="<?php echo $this->newsletter[0]['newsletter_subject']; ?>" placeholder="" class="form-control input-xlarge" />
+                                                <input type="text" name="newsletter_subject" id="newsletter_subject" value="<?php echo $this->newsletter[0]['newsletter_subject']; ?>" placeholder="" class="form-control input-xlarge" required/>
                                             </div>
 
                                         </div>
@@ -77,13 +77,6 @@
                             <label for="newsletter_body" class="control-label">Tartalom</label>
                             <textarea name="newsletter_body" id="newsletter_body" placeholder="" class="form-control input-xlarge"><?php echo $this->newsletter[0]['newsletter_body']; ?></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="newsletter_status">Státusz</label>
-                            <select name='newsletter_status' class="form-control input-xlarge">
-                                <option value="1" <?php echo ($this->newsletter[0]['newsletter_status'] == 1) ? "selected='selected'" : ''; ?> >Aktív</option>
-                                <option value="0" <?php echo ($this->newsletter[0]['newsletter_status'] == 0) ? "selected='selected'" : ''; ?> >Inaktív</option>
-                            </select>
-                        </div>
 
                         <div class="space10"></div>
                         <button class="btn green submit" type="submit" value="submit" name="submit_edit_newsletter">Mentés <i class="fa fa-check"></i></button>
@@ -101,4 +94,4 @@
 </div> <!-- END ROW -->	
 </div> <!-- END PAGE CONTENT-->    
 </div> <!-- END PAGE CONTENT WRAPPER -->
-</div><!-- END CONTAINER -->
+</div><!-- END CONTAINER

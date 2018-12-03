@@ -51,17 +51,19 @@
                                         <div class="col-md-6">	
                                             <div class="form-group">
                                                 <label for="newsletter_name" class="control-label">Név</label>
-                                                <input type="text" name="newsletter_name" id="newsletter_name" placeholder="" class="form-control input-xlarge" />
+                                                <input type="text" name="newsletter_name" id="newsletter_name" placeholder="" class="form-control input-xlarge" required/>
                                             </div>
                                             <div class="form-group">
                                                 <label for="newsletter_subject" class="control-label">Tárgy</label>
-                                                <input type="text" name="newsletter_subject" id="newsletter_subject" placeholder="" class="form-control input-xlarge" />
+                                                <input type="text" name="newsletter_subject" id="newsletter_subject" class="form-control input-xlarge" required/>
                                             </div>
 
 
                                             <div class="form-group">
                                                 <label for="newsletter_templates">Sablon kiválasztása</label>
-                                                <select id="template_select" name='newsletter_templates' class="form-control input-xlarge">                                     <?php foreach ($this->template_list as $value) { ?>
+                                                <select id="template_select" name='newsletter_templates' class="form-control input-xlarge">
+                                                        <option value="">-- Válassz --</option>
+                                                    <?php foreach ($this->template_list as $value) { ?>
                                                         <option value="<?php echo $value['template_id']; ?>"><?php echo $value['name']; ?></option>
                                                     <?php } ?>
                                                 </select>
@@ -83,7 +85,7 @@
                             <label for="newsletter_body" class="control-label">Tartalom</label>
                             <textarea name="newsletter_body" id="newsletter_body" placeholder="" class="form-control input-xlarge"></textarea>
                         </div>
-
+                        <!-- 
                         <div class="form-group">
                             <label for="newsletter_status">Státusz</label>
                             <select name='newsletter_status' class="form-control input-xlarge">
@@ -91,6 +93,7 @@
                                 <option value="0">Inaktív</option>
                             </select>
                         </div>
+                        -->
                         <!--
                                 <div class="form-group">
                                         <label for="newsletter_template">Sablon</label>
