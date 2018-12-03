@@ -163,4 +163,7 @@ $config['content_types'] = array(
     "gyik" => 5,
     "elotte-utana-kep" => 6
 );
+
+// Hírlevél küldés - script végrehajtás időlimit (másodpercben!)
+$config['newsletter_send_timelimit'] = 3;
 ?>
