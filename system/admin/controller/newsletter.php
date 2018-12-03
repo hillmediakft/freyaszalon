@@ -77,7 +77,7 @@ class Newsletter extends Controller {
             $data['newsletter_name'] = $_POST['newsletter_name'];
             $data['newsletter_subject'] = $_POST['newsletter_subject'];
             $data['newsletter_body'] = $_POST['newsletter_body'];
-            $data['newsletter_template'] = (int)$_POST['newsletter_templates'];
+            $data['newsletter_template'] = empty($_POST['newsletter_templates']) ? null : (int)$_POST['newsletter_templates'];
             //$data['newsletter_status'] = (int)$_POST['newsletter_status'];
             $data['newsletter_create_date'] = date('Y-m-d-G:i');
 
