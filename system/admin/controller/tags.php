@@ -6,7 +6,7 @@
  * @author Várnagy Attila
  * 
  */
-class Tags extends Controller {
+class Tags extends Admin_controller {
 
     function __construct() {
         parent::__construct();

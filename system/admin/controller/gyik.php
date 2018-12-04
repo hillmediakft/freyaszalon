@@ -6,7 +6,7 @@
  * @author Várnagy Attila
  * 
  */
-class Gyik extends Controller {
+class Gyik extends Admin_controller {
 
     function __construct() {
         parent::__construct();

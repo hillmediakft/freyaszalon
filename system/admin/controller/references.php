@@ -1,5 +1,5 @@
 <?php
-class References extends Controller {
+class References extends Admin_controller {
 
 	function __construct()
 	{

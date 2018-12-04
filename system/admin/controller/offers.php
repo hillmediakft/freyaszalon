@@ -1,11 +1,11 @@
 <?php
 
-class Offers extends Controller {
+class Offers extends Admin_controller {
 
     function __construct() {
         parent::__construct();
         $this->loadModel('offers_model');
-        Auth::handleLogin();
+        //Auth::handleLogin();
     }
 
     public function index() {

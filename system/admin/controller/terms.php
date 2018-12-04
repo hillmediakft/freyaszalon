@@ -6,7 +6,7 @@
  * @author Várnagy Attila
  * 
  */
-class Terms extends Controller {
+class Terms extends Admin_controller {
 
     function __construct() {
         parent::__construct();

@@ -1,10 +1,10 @@
 <?php
 
-class Newsletter extends Controller {
+class Newsletter extends Admin_controller {
 
     function __construct() {
         parent::__construct();
-        Auth::handleLogin();
+        //Auth::handleLogin();
         $this->loadModel('newsletter_model');
     }
 
@@ -26,6 +26,10 @@ class Newsletter extends Controller {
         $this->view->render('newsletter/tpl_newsletter');
     }
 
+public function eee()
+{
+    die('mukodik hello');
+}
 
     /**
      * AJAX hírlevél küldésének regisztrálása az adatbázisban
@@ -213,7 +217,7 @@ class Newsletter extends Controller {
 
     /* --------- HÍRLEVÉL KÜLDÉS; CRON JOB; FOLYAMAT KÖVETÉS NÉLKÜL; IDŐLIMITTEL -------------------- */
     public function send_newsletter_timelimit()
-    {
+    {die('teszt005');
         // A script futásának az időlimitje (másodpercben)
         $time_limit = Config::get('newsletter_send_timelimit');
 

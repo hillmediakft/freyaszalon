@@ -1,13 +1,13 @@
 <?php
 
-class Szolgaltatasok extends Controller {
+class Szolgaltatasok extends Admin_controller {
 
     protected $content_type_id;
 
     function __construct() {
         parent::__construct();
         $this->content_type_id = Config::get('content_types.szolgaltatas');
-        Auth::handleLogin();
+        //Auth::handleLogin();
         /*       require_once "system/libs/logged_in_user.php";
           $this->user = new Logged_in_user();
           $this->check_access("menu_szolgaltatasok");

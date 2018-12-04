@@ -1,10 +1,10 @@
 <?php
 
-class Site_users extends Controller {
+class Site_users extends Admin_controller {
 
     function __construct() {
         parent::__construct();
-        Auth::handleLogin();
+        //Auth::handleLogin();
         $this->loadModel('site_users_model');
     }
 

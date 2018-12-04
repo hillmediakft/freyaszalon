@@ -1,10 +1,10 @@
 <?php
 
-class Promotions extends Controller {
+class Promotions extends Admin_controller {
 
     function __construct() {
         parent::__construct();
-        Auth::handleLogin();
+        //Auth::handleLogin();
         $this->loadModel('promotions_model');
     }
 

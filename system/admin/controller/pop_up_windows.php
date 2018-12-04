@@ -1,11 +1,11 @@
 <?php
 
-class Pop_up_windows extends Controller {
+class Pop_up_windows extends Admin_controller {
 
     function __construct() {
         parent::__construct();
         $this->loadModel('pop_up_windows_model');
-        Auth::handleLogin();
+        //Auth::handleLogin();
     }
 
     public function index() {
