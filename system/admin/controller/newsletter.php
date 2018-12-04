@@ -26,11 +26,6 @@ class Newsletter extends Admin_controller {
         $this->view->render('newsletter/tpl_newsletter');
     }
 
-public function eee()
-{
-    die('mukodik hello');
-}
-
     /**
      * AJAX hírlevél küldésének regisztrálása az adatbázisban
      */
@@ -217,7 +212,16 @@ public function eee()
 
     /* --------- HÍRLEVÉL KÜLDÉS; CRON JOB; FOLYAMAT KÖVETÉS NÉLKÜL; IDŐLIMITTEL -------------------- */
     public function send_newsletter_timelimit()
-    {die('teszt005');
+    {
+        if ($this->request->has_query('cronkey')) {
+            $cronkey = $this->request->get_query('cronkey');
+            if ($this->request->get_query('cronkey') != 'DH7AVdT0uGeN-WfZLkgfutDfDeYrqELjjTZrnulm3RY') {
+                exit;
+            }
+        } else {
+            exit;
+        } 
+
         // A script futásának az időlimitje (másodpercben)
         $time_limit = Config::get('newsletter_send_timelimit');
 
