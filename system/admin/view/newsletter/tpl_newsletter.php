@@ -111,6 +111,9 @@
 
                                                             <?php if ($value['progress_status'] == 1 || $value['progress_status'] == 2) { ?>
                                                                 <li>
+                                                                    <a class="show_preview_modal" data-id="<?php echo $value['newsletter_id']; ?>"><i class="fa fa-eye"></i> Megtekintés</a>
+                                                                </li>
+                                                                <li>
                                                                     <a href="admin/newsletter/newsletter_stat/<?php echo $value['statid']; ?>"><i class="fa fa-bar-chart-o"></i> Statisztika</a>
                                                                 </li>
                                                             <?php } else { ?> 
@@ -119,7 +122,7 @@
                                                                     <a id="send_test_email_<?php echo $value['newsletter_id']; ?>" data-id="<?php echo $value['newsletter_id']; ?>" data-subject="<?php echo $value['newsletter_subject']; ?>"><i class="fa fa-arrow-circle-o-right"></i> Teszt e-mail elküldése</a>
                                                                 </li>
                                                                 <li>
-                                                                    <a id="submit_newsletter_<?php echo $value['newsletter_id']; ?>" rel="<?php echo $value['newsletter_id']; ?>" data-statid="<?php echo $value['statid']; ?>"><i class="fa fa-envelope"></i> Hírlevél elküldése</a>
+                                                                    <a id="submit_newsletter_<?php echo $value['newsletter_id']; ?>" rel="<?php echo $value['newsletter_id']; ?>" data-statid="<?php echo $value['statid']; ?>"><i class="fa fa-envelope"></i> Hírlevél elküldés időpontja</a>
                                                                 </li>
                                                                 <li>
                                                                     <a href="admin/newsletter/edit_newsletter/<?php echo $value['newsletter_id']; ?>"><i class="fa fa-pencil"></i> Szerkeszt</a>
@@ -174,6 +177,7 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
                 <h4 class="modal-title">Válassza ki a hírlevél küldésének időpontját</h4>
+                <p>A hírlevél küldése automatikusan fog elindulni a megadott időpontban.</p>
             </div>
             <div class="modal-body">
 
@@ -205,6 +209,23 @@
     </div>
 </div>
 
+<!--- *** preview modal **** -->
+<div class="modal fade" id="preview_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Hírlevél nézet</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="newsletter_preview" srcdoc="" style="border:0; width:100%; height:600px;"></iframe>    
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Bezár</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <div id="loadingDiv"></div>
