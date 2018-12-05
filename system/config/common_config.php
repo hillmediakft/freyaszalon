@@ -165,5 +165,5 @@ $config['content_types'] = array(
 );
 
 // Hírlevél küldés - script végrehajtás időlimit (másodpercben!)
-$config['newsletter_send_timelimit'] = 3;
+$config['newsletter_send_timelimit'] = 100;
 ?>
