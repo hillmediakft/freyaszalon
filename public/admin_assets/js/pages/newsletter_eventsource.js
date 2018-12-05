@@ -45,11 +45,11 @@ var Newsletter = function () {
                     "orderable": false
                 }],
             "lengthMenu": [
-                [5, 15, 20, -1],
-                [5, 15, 20, "Összes"] // change per page values here
+                [10, 50, 100, -1],
+                [10, 50, 100, "Összes"] // change per page values here
             ],
             // set the initial value
-            "pageLength": 5,
+            "pageLength": 50,
             "pagingType": "bootstrap_full_number",
             "language": {
                 "search": "Keresés: ",
@@ -297,6 +297,55 @@ var Newsletter = function () {
         });
 
     }
+
+    /**
+     * Hírlevél nézet modal
+     */
+    var showNewsletterBodyModal = function () {
+        $('#newsletter_table').on('click', '.show_preview_modal', function (e) {
+            e.preventDefault();
+                       
+            var preview_wrapper = $('#newsletter_preview'); 
+            // a preview_wrapper "kiürítése, ha vaolt már betöltött sablon
+            //preview_wrapper.empty();
+            
+            //var deleteLink = $(this).attr('href');
+            var link = $(this);
+            var newsletter_id = link.attr('data-id');
+           
+            //végrehajtjuk az AJAX hívást
+            $.ajax({
+                type: "POST",
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                data: {
+                    newsletter_id: newsletter_id
+                },
+                // a feldolgozó url-je
+                url: "admin/newsletter/preview",
+                // kész a hívás... utána ez történjen
+                beforeSend: function() {
+                    App.blockUI({
+                        boxed: true,
+                        message: 'Feldolgozás...'
+                    });
+                },
+                complete: function () {
+                    App.unblockUI();
+                },
+                // itt kapjuk meg (és dolgozzuk fel) a feldolgozó php által visszadott adatot 
+                success: function (result) {
+
+                        $('#preview_modal').modal('show');
+                        //preview_wrapper.append(result);
+                        preview_wrapper.prop('srcdoc', result);
+                },
+                error: function (result, status, e) {
+                    console.log(e);
+                }
+            });          
+        });
+    }
+
 
     /**
      * Gomb enable disable
@@ -595,6 +644,7 @@ var Newsletter = function () {
             
             // submitNewsletterConfirm();
             submitNewsletterConfirmModal();
+            showNewsletterBodyModal();
 
             enableDisableButtons();
             hideAlert();
