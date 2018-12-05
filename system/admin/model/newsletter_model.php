@@ -44,10 +44,23 @@ class Newsletter_model extends Model {
     }
 
     /**
-     * 	Visszaadja az email_templates tábla tartalmát
-     * 	Ha kap egy id paramétert (integer), akkor csak egy sort ad vissza a táblából
+     * Visszadja a megadott hírlevél body-t (HTML kódját)
+     * @param  string $newsletter_id
+     * @return string
+     */
+    public function findNewsletterHTML($newsletter_id)
+    {
+        $this->query->set_table(array('newsletters'));
+        $this->query->set_columns(array('newsletter_body'));
+        $this->query->set_where('newsletter_id', '=', $newsletter_id);
+        return $this->query->select();
+    }
+
+    /**
+     *  Visszaadja az email_templates tábla tartalmát
+     *  Ha kap egy id paramétert (integer), akkor csak egy sort ad vissza a táblából
      *
-     * 	@param  Integer ha van bejövő paraméter, akkor a sablon id-je
+     *  @param  Integer ha van bejövő paraméter, akkor a sablon id-je
      *  @return array a hírlevelek tömbje 
      */
     public function template_query($id = null) {
