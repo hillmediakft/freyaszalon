@@ -250,7 +250,7 @@ class Newsletter extends Admin_controller {
 
             // Ha nincsenek függőben lévő kampányok
             if (empty($in_progress_campaigns)) {
-                exit('nincs fuggoben levo kampany');
+                exit;
             }
 
 
@@ -270,7 +270,7 @@ class Newsletter extends Admin_controller {
 
             // Ha a függőben lévő kampányok közül nincs egy sem, amit jelen pillanatban már küldeni kell
             if (empty($newsletter_id) || empty($statid)) {
-                exit('van fuggoben levo kampany, de meg nem kell kuldeni');
+                exit;
             } 
 
 
@@ -519,11 +519,7 @@ if (true) {
         $this->newsletter_model->updateStat($statid, $data, $quantity_increase);
 
         // Script futásának a befejezése
-        if ($time_limit_expired) {
-            exit('Email kuldes idolimit miatt befejezve.');
-        } else {
-            exit('Minden email elküldve!');
-        }
+        exit;
                 
     }
     /* --------- SIMA KÜLDÉS, FOLYAMAT KÖVETÉSE NÉLKÜL END-------------------- */
@@ -697,6 +693,21 @@ if (true) {
             echo $result;
         }
     }
+
+
+    /**
+     * A megadott id-jű hírlevél html-t adja vissza a javascriptnek
+     */
+    public function preview()
+    {
+        if (Util::is_ajax()) {
+            $id = $this->request->get_post('newsletter_id', 'integer');    
+            $result = $this->newsletter_model->findNewsletterHTML($id);
+            // html body visszaküldése a javascript-nek
+            echo $result[0]['newsletter_body'];
+        }
+    }
+
 
     public function send_test_newsletter_AJAX() {
 
